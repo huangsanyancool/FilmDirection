@@ -20,17 +20,19 @@ import org.springframework.web.multipart.MultipartFile;
 import com.java1234.entity.Film;
 import com.java1234.entity.Film;
 import com.java1234.service.FilmService;
+import com.java1234.service.WebSiteInfoService;
 import com.java1234.util.DateUtil;
+import com.java1234.util.StringUtil;
 
 @RestController
 @RequestMapping("/admin/film")
 public class FilmAdminController {
 	
-	@Autowired
-	private  HttpServletRequest request;
-	
 	@Resource
 	private FilmService filmService;
+	
+	@Resource
+	private WebSiteInfoService webSiteInfoService;
 	
 	@Value("${imageFilePath}")
 	private String imageFilePath;
@@ -43,7 +45,7 @@ public class FilmAdminController {
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping("/list")
+	@RequestMapping(value="/list")
 	public Map<String,Object> list(Film film,@RequestParam(value="page",required=false)Integer page,@RequestParam(value="rows",required=false)Integer rows)throws Exception{  
 		List<Film> filmList=filmService.list(film, page-1, rows);
 		Long total=filmService.getCount(film);
@@ -104,11 +106,22 @@ public class FilmAdminController {
 	@RequestMapping("/delete")
 	public Map<String,Object> delete(@RequestParam(value="ids")String ids)throws Exception{  
 		String idsStr[]=ids.split(",");
+		boolean flag=true;
 		for(int i=0;i<idsStr.length;i++ ){
-			filmService.delete(Integer.parseInt(idsStr[i]));
+			Integer filmId=Integer.parseInt(idsStr[i]);
+			if(webSiteInfoService.findByFilmId(filmId).size()>0){
+				flag=false;
+			}else{				
+				filmService.delete(filmId);
+			}
 		}
 		Map<String,Object> resultMap=new HashMap<String,Object>();
-		resultMap.put("success", true);
+		if(flag){
+			resultMap.put("success", true);
+		}else{
+			resultMap.put("success", false);
+			resultMap.put("errorMsg", "动态电影信息下有电影，不能删除！");
+		}
 		return resultMap;
 	}
 	
@@ -121,5 +134,21 @@ public class FilmAdminController {
 	@RequestMapping("/findById")
 	public Film findById(Integer id)throws Exception{
 		return filmService.findById(id);
+	}
+	
+	/**
+	 * 下拉框模糊查询用到
+	 * @param q
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping("/comboList")
+	public List<Film>comboList(String q) throws Exception{
+		if(StringUtil.isEmpty(q)){
+			return null;
+		}
+		Film film=new Film();
+		film.setName(q);
+		return filmService.list(film, 0, 30);// 最多查询30条记录
 	}
 }

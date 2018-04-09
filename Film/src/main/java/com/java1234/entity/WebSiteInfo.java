@@ -10,6 +10,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 /**
  * 网站动态更新电影信息实体
  * @author Administrator
@@ -80,6 +82,7 @@ public class WebSiteInfo {
 		this.url = url;
 	}
 
+	@JsonSerialize(using=CustomDateSerializer.class)
 	public Date getPublishDate() {
 		return publishDate;
 	}

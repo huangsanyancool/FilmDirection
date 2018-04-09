@@ -1,5 +1,6 @@
 package com.java1234.controller.admin;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.java1234.entity.WebSite;
+import com.java1234.entity.WebSiteInfo;
 import com.java1234.service.WebSiteInfoService;
 import com.java1234.service.WebSiteService;
-import com.java1234.util.StringUtil;
 
 /**
  * 收录电影网址Controller类
@@ -21,14 +22,13 @@ import com.java1234.util.StringUtil;
  *
  */
 @RestController
-@RequestMapping("/admin/webSite")
-public class WebSiteAdminController {
+@RequestMapping("/admin/webSiteInfo")
+public class WebSiteInfoAdminController {
 	
 	
-	@Resource
-	private WebSiteService webSiteService;
 	@Resource
 	private WebSiteInfoService webSiteInfoService;
+	
 	
 	/**
 	 * 分页查询收录电影网址
@@ -38,11 +38,11 @@ public class WebSiteAdminController {
 	 * @throws Exception
 	 */
 	@RequestMapping("/list")
-	public Map<String,Object> list(WebSite webSite,@RequestParam(value="page",required=false)Integer page,@RequestParam(value="rows",required=false)Integer rows)throws Exception{  
-		List<WebSite> webSiteList=webSiteService.list(webSite, page-1, rows);
-		Long total=webSiteService.getCount(webSite);
+	public Map<String,Object> list(WebSiteInfo webSiteInfo,@RequestParam(value="page",required=false)Integer page,@RequestParam(value="rows",required=false)Integer rows)throws Exception{  
+		List<WebSiteInfo> webSiteInfoList=webSiteInfoService.list(webSiteInfo, page-1, rows);
+		Long total=webSiteInfoService.getCount(webSiteInfo);
 		Map<String,Object> resultMap=new HashMap<String,Object>();
-		resultMap.put("rows", webSiteList);
+		resultMap.put("rows", webSiteInfoList);
 		resultMap.put("total", total);
 		return resultMap;
 	}
@@ -54,9 +54,10 @@ public class WebSiteAdminController {
 	 * @throws Exception
 	 */
 	@RequestMapping("/save")
-	public Map<String,Object> save(WebSite webSite)throws Exception{  
+	public Map<String,Object> save(WebSiteInfo webSiteInfo)throws Exception{  
+		webSiteInfo.setPublishDate(new Date());
 		Map<String,Object> resultMap=new HashMap<String,Object>();
-		webSiteService.save(webSite);
+		webSiteInfoService.save(webSiteInfo);
 		resultMap.put("success", true);
 		return resultMap;
 	}
@@ -70,40 +71,12 @@ public class WebSiteAdminController {
 	@RequestMapping("/delete")
 	public Map<String,Object> delete(@RequestParam(value="ids")String ids)throws Exception{  
 		String idsStr[]=ids.split(",");
-		boolean flag=true;
 		for(int i=0;i<idsStr.length;i++ ){
-			Integer webSiteId=Integer.parseInt(idsStr[i]);
-			if(webSiteInfoService.findByWebSiteId(webSiteId).size()>0){
-				flag=false;
-			}else{
-				webSiteService.delete(webSiteId);
-			}
+			webSiteInfoService.delete(Integer.parseInt(idsStr[i]));
 		}
 		Map<String,Object> resultMap=new HashMap<String,Object>();
-		if(flag){
-			resultMap.put("success", true);
-		}else{
-			resultMap.put("success", false);
-			resultMap.put("errorMsg", "电影动态电影信息下存在电影网址信息，不能删除！");
-		}
+		resultMap.put("success", true);
 		return resultMap;
-	}
-	
-	/**
-	 * 下拉框模糊查询用到
-	 * @param q
-	 * @return
-	 * @throws Exception
-	 */
-	@RequestMapping("/comboList")
-	public List<WebSite>comboList(String q)throws Exception{
-		
-		if(StringUtil.isEmpty(q)){
-			return null;
-		}
-		WebSite webSite = new WebSite();
-		webSite.setUrl(q);
-		return webSiteService.list(webSite, 0, 30);// 最多查询30条记录
 	}
 	
 	
